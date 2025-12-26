@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>徒步路线探索者 - 发现附近的徒步路线</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(90deg, #2c3e50, #3498db);
+            color: white;
+            padding: 2rem 0;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        select, input {
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .primary-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .primary-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .secondary-btn {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .secondary-btn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .location-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .trails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .trail-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .trail-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .trail-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .trail-content {
+            padding: 1.5rem;
+        }
+
+        .trail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .trail-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .difficulty-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .difficulty-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .difficulty-hard {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .trail-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        .trail-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .feature-tag {
+            background: #ecf0f1;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+        }
+
+        .trail-description {
+            color: #666;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .rating {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem 0;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .trails-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🚶‍♂️ 徒步路线探索者</h1>
+                    <p class="subtitle">发现您附近的精彩徒步路线，开始您的户外冒险！</p>
+                </div>
+                <div class="stats-display">
+                    <div id="stats-info">正在加载统计信息...</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="distanceFilter">最大距离 (公里)</label>
+                    <input type="range" id="distanceFilter" min="5" max="100" value="50" step="5">
+                    <span id="distanceValue">50 公里</span>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="difficultyFilter">难度级别</label>
+                    <select id="difficultyFilter">
+                        <option value="">全部难度</option>
+                        <option value="easy">简单</option>
+                        <option value="medium">中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="sortFilter">排序方式</label>
+                    <select id="sortFilter">
+                        <option value="distance">距离最近</option>
+                        <option value="rating">评分最高</option>
+                        <option value="distance_km">路线最长</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="primary-btn" onclick="getCurrentLocation()">
+                    📍 使用我的当前位置
+                </button>
+                <button class="secondary-btn" onclick="loadTrails()">
+                    🔄 刷新路线
+                </button>
+                <button onclick="showManualLocation()">
+                    🗺️ 手动设置位置
+                </button>
+            </div>
+
+            <div class="location-info" id="locationInfo">
+                <p>当前位置: <span id="currentLocation">正在获取位置...</span></p>
+                <p>找到 <span id="trailCount">0</span> 条路线</p>
+            </div>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="loading" id="loadingMessage">
+            ⏳ 正在加载徒步路线...
+        </div>
+
+        <div class="trails-grid" id="trailsContainer">
+            <!-- 路线卡片将通过JavaScript动态生成 -->
+        </div>
+
+        <footer>
+            <p>© 2024 徒步路线探索者 | 使用 FastAPI + 原生 JavaScript 构建</p>
+            <p>遵循内部开发规范 - 快乐编码！ 😊</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentLocation = { lat: 40.7128, lng: -74.0060 }; // 默认纽约
+        let trails = [];
+        let isLoading = false;
+
+        // DOM元素
+        const trailsContainer = document.getElementById('trailsContainer');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const locationInfo = document.getElementById('locationInfo');
+        const currentLocationSpan = document.getElementById('currentLocation');
+        const trailCountSpan = document.getElementById('trailCount');
+        const distanceFilter = document.getElementById('distanceFilter');
+        const distanceValue = document.getElementById('distanceValue');
+        const statsInfo = document.getElementById('stats-info');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置距离筛选器事件
+            distanceFilter.addEventListener('input', function() {
+                distanceValue.textContent = this.value + ' 公里';
+            });
+            
+            // 加载初始数据
+            loadTrails();
+            loadStats();
+            
+            // 设置筛选器变化事件
+            document.getElementById('difficultyFilter').addEventListener('change', loadTrails);
+            document.getElementById('sortFilter').addEventListener('change', sortTrails);
+            distanceFilter.addEventListener('change', loadTrails);
+        });
+
+        // 获取当前位置
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                showError('您的浏览器不支持地理位置功能');
+                return;
+            }
+
+            showLoading('正在获取您的位置...');
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    // 更新位置到服务器
+                    updateServerLocation();
+                    loadTrails();
+                },
+                function(error) {
+                    showError('无法获取您的位置: ' + error.message);
+                    hideLoading();
+                }
+            );
+        }
+
+        // 更新服务器位置
+        async function updateServerLocation() {
+            try {
+                const response = await fetch('/api/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(currentLocation)
+                });
+                
+                const data = await response.json();
+                console.log('位置更新成功:', data);
+            } catch (error) {
+                console.error('位置更新失败:', error);
+            }
+        }
+
+        // 加载徒步路线
+        async function loadTrails() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            showLoading('正在搜索附近的徒步路线...');
+            hideError();
+            
+            try {
+                const maxDistance = distanceFilter.value;
+                const difficulty = document.getElementById('difficultyFilter').value;
+                
+                let url = `/api/trails?max_distance_km=${maxDistance}`;
+                if (difficulty) {
+                    url += `&difficulty=${difficulty}`;
+                }
+                if (currentLocation.lat && currentLocation.lng) {
+                    url += `&lat=${currentLocation.lat}&lng=${currentLocation.lng}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // 检查响应是否包含 happiness_level
+                if (!data.happiness_level) {
+                    throw new Error('API响应不符合规范');
+                }
+                
+                trails = data.trails;
+                currentLocation = data.user_location;
+                
+                // 更新UI
+                updateLocationInfo();
+                renderTrails();
+                sortTrails();
+                
+            } catch (error) {
+                showError('加载路线失败: ' + error.message);
+                console.error('Error:', error);
+            } finally {
+                isLoading = false;
+                hideLoading();
+            }
+        }
+
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.happiness_level === 'max') {
+                    statsInfo.innerHTML = `
+                        <strong>${data.total_trails}</strong> 条路线可用 | 
+                        访问次数: <strong>${data.app_counter}</strong>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+            }
+        }
+
+        // 渲染路线卡片
+        function renderTrails() {
+            if (trails.length === 0) {
+                trailsContainer.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <h3>未找到符合条件的徒步路线</h3>
+                        <p>尝试调整筛选条件或更改位置</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            trailsContainer.innerHTML = trails.map(trail => `
+                <div class="trail-card">
+                    <img src="${trail.image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800'}" 
+                         alt="${trail.name}" 
+                         class="trail-image"
+                         onerror="this.src='https://images.unsplash.com/photo-1551632811-561732d1e306?w=800'">
+                    
+                    <div class="trail-content">
+                        <div class="trail-header">
+                            <h3 class="trail-title">${trail.name}</h3>
+                            <span class="difficulty-badge difficulty-${trail.difficulty}">
+                                ${getDifficultyText(trail.difficulty)}
+                            </span>
+                        </div>
+                        
+                        <div class="trail-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${trail.distance_km}km</div>
+                                <div class="stat-label">距离</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${trail.estimated_time_hours}h</div>
+                                <div class="stat-label">时间</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${trail.distance_from_user_km || '?'}km</div>
+                                <div class="stat-label">距您</div>
+                            </div>
+                        </div>
+                        
+                        <div class="trail-description">
+                            ${trail.description}
+                        </div>
+                        
+                        <div class="trail-features">
+                            ${trail.features.map(feature => `
+                                <span class="feature-tag">${feature}</span>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                            <div class="rating">
+                                ⭐ ${trail.rating}/5.0
+                            </div>
+                            <button onclick="viewTrailDetail(${trail.id})" 
+                                    style="background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 排序路线
+        function sortTrails() {
+            const sortBy = document.getElementById('sortFilter').value;
+            
+            if (sortBy === 'distance') {
+                trails.sort((a, b) => (a.distance_from_user_km || 999) - (b.distance_from_user_km || 999));
+            } else if (sortBy === 'rating') {
+                trails.sort((a, b) => b.rating - a.rating);
+            } else if (sortBy === 'distance_km') {
+                trails.sort((a, b) => b.distance_km - a.distance_km);
+            }
+            
+            renderTrails();
+        }
+
+        // 查看路线详情
+        function viewTrailDetail(trailId) {
+            alert(`查看路线 #${trailId} 的详细信息\n功能开发中...`);
+            // 实际应用中这里会跳转到详情页面或显示模态框
+        }
+
+        // 手动设置位置
+        function showManualLocation() {
+            const lat = prompt('请输入纬度 (例如: 40.7128):', currentLocation.lat);
+            const lng = prompt('请输入经度 (例如: -74.0060):', currentLocation.lng);
+            
+            if (lat && lng) {
+                currentLocation = {
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng)
+                };
+                
+                updateServerLocation();
+                loadTrails();
+            }
+        }
+
+        // 更新位置信息显示
+        function updateLocationInfo() {
+            currentLocationSpan.textContent = 
+                `纬度: ${currentLocation.lat.toFixed(4)}, 经度: ${currentLocation.lng.toFixed(4)}`;
+            trailCountSpan.textContent = trails.length;
+            locationInfo.style.display = 'block';
+        }
+
+        // 工具函数
+        function getDifficultyText(difficulty) {
+            const map = {
+                'easy': '简单',
+                'medium': '中等', 
+                'hard': '困难'
+            };
+            return map[difficulty] || difficulty;
+        }
+
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            loadingMessage.style.display = 'block';
+            trailsContainer.style.opacity = '0.5';
+        }
+
+        function hideLoading() {
+            loadingMessage.style.display = 'none';
+            trailsContainer.style.opacity = '1';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // 定期刷新统计信息
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

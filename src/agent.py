@@ -28,23 +28,24 @@ def search_local_docs(query: str) -> str:
     return formatted
 
 # (B) 文件写入工具
+
 @tool
 def write_file(file_path: str, content: str) -> str:
     """
-    将内容写入到指定文件。
-    用于生成代码文件、配置文件或文档。
-    
-    Args:
-        file_path: 相对路径，例如 'src/hello.py'
-        content: 要写入的完整文件内容
+    将内容写入到 'output' 目录下的指定文件。
+    ...
     """
-    # 安全检查：防止写入到项目之外
-    if ".." in file_path or file_path.startswith("/") or file_path.startswith("\\"):
-        return "Error: 只能在当前工作目录下写入文件，禁止使用绝对路径或 '..'"
-    
+    # 强制加上 output/ 前缀
+    if not file_path.startswith("output/"):
+        file_path = os.path.join("output", file_path)
     try:
-        # 自动创建父目录
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # --- 修复开始 ---
+        # 获取父目录
+        directory = os.path.dirname(file_path)
+        # 只有当 directory 不为空时，才尝试创建目录
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        # --- 修复结束 ---
         
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -103,13 +104,25 @@ def create_agent():
     llm_with_tools = llm.bind_tools(tools)
     
     # 4. 定义系统提示词
-    SYSTEM_PROMPT = """你是一个全能编程助手 DevMate。
-你的目标是帮助用户编写代码、解决 bug 并生成项目文件。
+    SYSTEM_PROMPT = SYSTEM_PROMPT = """你是一个全能编程助手 DevMate。
+你的目标是帮助用户快速构建原型、编写代码并生成项目文件。
 
-核心原则：
-1. **知识优先**: 遇到问题时，优先查阅 [search_local_docs] 看看有没有内部规范。如果本地没有，再使用 [search_web] 查互联网。
-2. **文件操作**: 当用户让你“写一个...文件”或“生成项目”时，请务必使用 [write_file] 工具将代码写入硬盘，而不仅仅是打印在聊天框里。
-3. **规范性**: 生成的代码必须符合你查到的内部规范（如果有）。
+核心决策原则：
+1. **行动优先**: 面对宽泛的构建请求（如“做一个网站”），不要陷入无休止的技术调研。**立即选择一套最简单的默认技术栈（Python FastAPI + 原生 HTML）**，并开始编写代码。
+
+2. **知识检索与严格合规**:
+   - 涉及具体实现细节（如 API 用法）时，才使用 [search_web]。搜到第一个可用示例就停止。
+   - 涉及项目规范时，**必须**查阅 [search_local_docs]。
+   - **关键指令**: 生成的代码必须 **100% 严格遵守** 查到的内部规范（例如：全局变量前缀必须是 `dm_secret_`，API 响应必须包含特定字段等）。违反规范的代码是不可接受的。
+
+3. **文件落地与隔离**:
+   - 必须使用 [write_file] 将代码写入文件。
+   - **项目隔离**: 请为每个生成的项目创建一个具有描述性的子目录（例如 `output/hiking_app/`），将所有文件放在该目录下，避免不同项目的文件混淆。
+   - **一次性交付**: 在一轮交互中，连续调用多次 [write_file] 把所有必要文件（如 main.py, index.html）都写完，不要分批次问用户。
+
+4. **禁止啰嗦**: 文件写完后，直接回复“任务完成”并展示文件列表，不要反问用户意见。
+
+5. **自我修正**: 如果遇到工具报错，尝试修复参数重试。如果连续失败两次，则放弃该步骤并告知用户。
 """
 
     # 5. 构建 LangGraph 图

@@ -39,8 +39,7 @@ def main():
             print("\n🤖 DevMate is thinking...")
             
             # 使用 invoke 运行图
-            final_state = agent_app.invoke({"messages": messages})
-            
+            final_state = agent_app.invoke({"messages": messages}, config={"recursion_limit": 50})
             # 获取最新的 AI 回复
             last_msg = final_state["messages"][-1]
             print(f"\n🤖 Agent: {last_msg.content}")
