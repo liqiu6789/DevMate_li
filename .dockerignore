@@ -1,0 +1,8 @@
+开发文档/
+.git
+.venv
+__pycache__
+chroma_db
+output
+.env
+dataset_*.csv

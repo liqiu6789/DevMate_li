@@ -1,0 +1,25 @@
+services:
+  devmate:
+    build: .
+    container_name: devmate-app
+    # 启用交互模式 (因为 main.py 需要 input())
+    stdin_open: true 
+    tty: true        
+    
+    # 挂载卷
+    volumes:
+      # 挂载 docs 目录，允许我们在宿主机修改文档，容器内实时生效
+      - ./docs:/app/docs
+      # 挂载 output 目录，让 Agent 生成的代码能保存到宿主机
+      - ./output:/app/output
+      # 挂载 chroma_db，持久化向量数据库
+      - ./chroma_db:/app/chroma_db
+      
+    # 环境变量
+    env_file:
+      - .env
+    
+    # 也可以手动覆盖某些变量
+    environment:
+      - LANGCHAIN_TRACING_V2=true
+      - LANGCHAIN_PROJECT=devmate-docker
